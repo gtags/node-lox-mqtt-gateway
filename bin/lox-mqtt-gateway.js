@@ -7,6 +7,9 @@ if (!process.env.NODE_CONFIG_DIR){
 }
 var config = require("config");
 
+if (config.has('publish_options')) {
+    var pubopts = config.get('publish_options');
+}
 var logger = lox_mqtt_gateway.Logger(config.get('winston'));
 var app = new lox_mqtt_gateway.App(logger);
 var mqtt_client = lox_mqtt_gateway.mqtt_builder(config.get('mqtt'), app);
@@ -37,14 +40,14 @@ lox_client.on('get_structure_file', function(data) {
         function(value) {
             logger.warn("MQTT Structure - invalid type of control", value);
         }
-    ));
+    ), config.get('miniserver.mqtt_prefix'));
 
     mqtt_client.subscribe(lox_mqtt_adaptor.get_topic_for_subscription());
 
     lox_mqtt_adaptor.on('for_mqtt', function(topic, data){
         logger.debug("MQTT Adaptor - for mqtt: ", {topic: topic, data: data});
         var fixedTopicName = topic.replace("+", "_").replace("#", "_")
-        mqtt_client.publish(fixedTopicName, data);
+        mqtt_client.publish(fixedTopicName, data, pubopts);
     });
 });
 
